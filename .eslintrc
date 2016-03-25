@@ -1,0 +1,10 @@
+{
+  "parserOptions": {
+    "ecmaVersion": 6,
+    "sourceType": "module"
+  },
+  "rules": {
+    "quote-props": [2, "as-needed"],
+    "quotes": [2, "single"]
+  }
+}
