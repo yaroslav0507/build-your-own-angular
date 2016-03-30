@@ -17,9 +17,10 @@ export default class Scope {
         this.$$watchers.push(watcher);
     }
 
-    $digest() {
+    $$digestOnce() {
         let oldValue,
-            newValue;
+            newValue,
+            dirty;
 
         _.forEach(this.$$watchers, watcher => {
             newValue = watcher.watchFn(this);
@@ -28,7 +29,16 @@ export default class Scope {
             if (newValue !== oldValue) {
                 watcher.last = newValue;
                 watcher.listenerFn(newValue, (oldValue === this._initWatchVal ? newValue : oldValue), this);
+                dirty = true;
             }
-        })
+        });
+        return dirty;
+    }
+
+    $digest(){
+        let dirty;
+        do {
+            dirty = this.$$digestOnce();
+        } while (dirty);
     }
 }

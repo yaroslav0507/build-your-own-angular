@@ -93,6 +93,33 @@ describe('Scope', () => {
                 scope.$digest();
                 watchFn.should.have.been.called;
             });
+
+            it('should trigger chained watchers in the same digest', () => {
+                scope.name = 'Jane';
+
+                watchFunc = scope => (scope.nameUpper);
+                listenerFunc = (newValue, oldValue, scope) => {
+                    if(newValue) {
+                        scope.initial = newValue.substring(0, 1) + '.';
+                    }
+                };
+                scope.$watch(watchFunc, listenerFunc);
+
+                watchFunc = scope => (scope.name);
+                listenerFunc = (newValue, oldValue, scope) => {
+                    if(newValue) {
+                        scope.nameUpper = newValue.toUpperCase();
+                    }
+                };
+                scope.$watch(watchFunc, listenerFunc);
+
+                scope.$digest();
+                scope.initial.should.equal('J.');
+
+                scope.name = 'Ben';
+                scope.$digest();
+                scope.initial.should.equal('B.');
+            })
         });
 
     });
