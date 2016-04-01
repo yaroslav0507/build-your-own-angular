@@ -4,6 +4,7 @@ import _ from 'lodash';
 export default class Scope {
     constructor() {
         this.$$watchers = [];
+        this.$$lastDirtyWatch = null;
     }
 
     _initWatchVal(){}
@@ -15,6 +16,7 @@ export default class Scope {
             last: this._initWatchVal
         };
         this.$$watchers.push(watcher);
+        this.$$lastDirtyWatch = null;
     }
 
     $$digestOnce() {
@@ -27,17 +29,21 @@ export default class Scope {
             oldValue = watcher.last;
 
             if (newValue !== oldValue) {
+                this.$$lastDirtyWatch = watcher;
                 watcher.last = newValue;
                 watcher.listenerFn(newValue, (oldValue === this._initWatchVal ? newValue : oldValue), this);
                 dirty = true;
+            } else if (this.$$lastDirtyWatch === watcher) {
+                return false;
             }
         });
         return dirty;
     }
 
     $digest(){
-        let dirty;
         let TTL = 10;
+        let dirty;
+        this.$$lastDirtyWatch = null;
 
         do {
             dirty = this.$$digestOnce();

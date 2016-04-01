@@ -145,6 +145,50 @@ describe('Scope', () => {
 
                 scope.$digest.should.throw(Error);
             });
+
+            it('should end the digest when the last watch is clean', () => {
+                scope.array = _.range(100);
+                let watchExecutions = 0;
+
+                _.times(scope.array.length, (i) => {
+                    scope.$watch(
+                        scope => {
+                            watchExecutions++;
+                            return scope.array[i]
+                        },
+                        (newValue, oldValue, scope) => {
+
+                        }
+                    )
+                });
+
+                scope.$digest();
+                watchExecutions.should.equals(200);
+
+                scope.array[0] = 420;
+                scope.$digest();
+                watchExecutions.should.equals(301);
+            });
+
+            it('should not end digest while new watchers haven\'t run', () => {
+                scope.aValue = 'abc';
+                scope.counter = 0;
+
+                scope.$watch(
+                    scope => scope.aValue,
+                    (newValue, oldValue, scope) => {
+                        scope.$watch(
+                            scope => scope.aValue,
+                            (newValue, oldValue, scope) => {
+                                scope.counter++;
+                            }
+                        )
+                    }
+                );
+
+                scope.$digest();
+                scope.counter.should.equals(1);
+            });
         });
 
     });
