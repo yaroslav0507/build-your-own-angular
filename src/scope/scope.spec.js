@@ -10,7 +10,7 @@ describe('Scope', () => {
 
     describe('digest', () => {
         beforeEach(() => {
-           scope = new Scope();
+            scope = new Scope();
         });
 
         it('should call a listener function on first $digest', () => {
@@ -76,11 +76,13 @@ describe('Scope', () => {
                 scope.someValue = 123;
                 let oldValueGiven;
 
-                watchFunc = scope => (scope.someValue);
-                listenerFunc = (newValue, oldValue, scope) => {
-                    oldValueGiven = oldValue;
-                };
-                scope.$watch(watchFunc, listenerFunc);
+                scope.$watch(
+                    scope => scope.someValue,
+                    (newValue, oldValue, scope) => {
+                        oldValueGiven = oldValue;
+                    }
+                );
+
                 scope.$digest();
                 oldValueGiven.should.equal(123);
             });
@@ -97,21 +99,23 @@ describe('Scope', () => {
             it('should trigger chained watchers in the same digest', () => {
                 scope.name = 'Jane';
 
-                watchFunc = scope => (scope.nameUpper);
-                listenerFunc = (newValue, oldValue, scope) => {
-                    if(newValue) {
-                        scope.initial = newValue.substring(0, 1) + '.';
+                scope.$watch(
+                    scope => scope.nameUpper,
+                    (newValue, oldValue, scope) => {
+                        if (newValue) {
+                            scope.initial = newValue.substring(0, 1) + '.';
+                        }
                     }
-                };
-                scope.$watch(watchFunc, listenerFunc);
+                );
 
-                watchFunc = scope => (scope.name);
-                listenerFunc = (newValue, oldValue, scope) => {
-                    if(newValue) {
-                        scope.nameUpper = newValue.toUpperCase();
+                scope.$watch(
+                    scope => scope.name,
+                    (newValue, oldValue, scope) => {
+                        if (newValue) {
+                            scope.nameUpper = newValue.toUpperCase();
+                        }
                     }
-                };
-                scope.$watch(watchFunc, listenerFunc);
+                );
 
                 scope.$digest();
                 scope.initial.should.equal('J.');
@@ -119,7 +123,28 @@ describe('Scope', () => {
                 scope.name = 'Ben';
                 scope.$digest();
                 scope.initial.should.equal('B.');
-            })
+            });
+
+            it('should gives up on watchers after 10 digest loops', () => {
+                scope.counterA = 0;
+                scope.counterB = 0;
+
+                scope.$watch(
+                    scope => scope.counterA,
+                    (newValue, oldValue, scope) => {
+                        scope.counterB++;
+                    }
+                );
+
+                scope.$watch(
+                    scope => scope.counterB,
+                    (newValue, oldValue, scope) => {
+                        scope.counterA++;
+                    }
+                );
+
+                scope.$digest.should.throw(Error);
+            });
         });
 
     });

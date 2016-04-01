@@ -37,8 +37,13 @@ export default class Scope {
 
     $digest(){
         let dirty;
+        let TTL = 10;
+
         do {
             dirty = this.$$digestOnce();
+            if(dirty && !(TTL--)){
+                throw new Error('10 digest iterations reached');
+            }
         } while (dirty);
     }
 }
