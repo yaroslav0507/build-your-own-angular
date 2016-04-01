@@ -189,6 +189,26 @@ describe('Scope', () => {
                 scope.$digest();
                 scope.counter.should.equals(1);
             });
+
+            it('should make comparison based on value if true flag is provided', () => {
+                scope.aValue = _.range(3);
+                scope.counter = 0;
+
+                scope.$watch(
+                    scope => scope.aValue,
+                    (newValue, oldValue, scope) => {
+                        scope.counter++;
+                    },
+                    true
+                );
+
+                scope.$digest();
+                scope.counter.should.equals(1);
+
+                scope.aValue.push(4);
+                scope.$digest();
+                scope.counter.should.equals(2);
+            });
         });
 
     });

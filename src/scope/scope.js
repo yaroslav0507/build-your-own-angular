@@ -9,28 +9,36 @@ export default class Scope {
 
     _initWatchVal(){}
 
-    $watch(watchFn, listenerFn) {
+
+    $watch(watchFn, listenerFn, valueEqFlag) {
         let watcher = {
             watchFn: watchFn,
             listenerFn: listenerFn || function(){},
+            valueEqFlag: !!valueEqFlag,
             last: this._initWatchVal
         };
         this.$$watchers.push(watcher);
         this.$$lastDirtyWatch = null;
     }
 
+    $$areEqual(newValue, oldValue, valueEqFlag) {
+        if(valueEqFlag) {
+            return _.isEqual(newValue, oldValue);
+        } else {
+            return newValue === oldValue;
+        }
+    }
+
     $$digestOnce() {
-        let oldValue,
-            newValue,
-            dirty;
+        let oldValue, newValue, dirty;
 
         _.forEach(this.$$watchers, watcher => {
             newValue = watcher.watchFn(this);
             oldValue = watcher.last;
 
-            if (newValue !== oldValue) {
+            if (!this.$$areEqual(newValue, oldValue, watcher.valueEqFlag)) {
                 this.$$lastDirtyWatch = watcher;
-                watcher.last = newValue;
+                watcher.last = (watcher.valueEqFlag ? _.cloneDeep(newValue) : newValue);
                 watcher.listenerFn(newValue, (oldValue === this._initWatchVal ? newValue : oldValue), this);
                 dirty = true;
             } else if (this.$$lastDirtyWatch === watcher) {
