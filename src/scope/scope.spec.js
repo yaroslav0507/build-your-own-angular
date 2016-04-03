@@ -209,6 +209,24 @@ describe('Scope', () => {
                 scope.$digest();
                 scope.counter.should.equals(2);
             });
+
+            it("should correctly handle NaNs", () => {
+                scope.number = 0 / 0;
+                scope.counter = 0;
+
+                scope.$watch(
+                    scope => scope.number,
+                    (newValue, oldValue, scope) => {
+                        scope.counter++;
+                    }
+                );
+
+                scope.$digest();
+                scope.counter.should.equals(1);
+
+                scope.$digest();
+                scope.counter.should.equals(1);
+            });
         });
 
     });
