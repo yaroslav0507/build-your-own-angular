@@ -9,6 +9,9 @@ export default class Scope {
 
     _initWatchVal(){}
 
+    $eval(expr, locals){
+        return expr(this, locals)
+    }
 
     $watch(watchFn, listenerFn, valueEqFlag) {
         let watcher = {

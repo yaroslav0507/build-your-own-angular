@@ -227,6 +227,25 @@ describe('Scope', () => {
                 scope.$digest();
                 scope.counter.should.equals(1);
             });
+
+            describe('eval', () => {
+                let value = Math.random();
+
+                it('should execute $evale\'d function and returns result', () => {
+                    scope.aValue = value;
+                    let result = scope.$eval(scope => scope.aValue);
+                    result.should.equals(value);
+                });
+
+                it('should pass second $eval argument straight through', () => {
+                    scope.aValue = value;
+
+                    let result = scope.$eval((scope, arg) => {
+                        return scope.aValue + arg;
+                    }, 2);
+                    result.should.equals(value + 2);
+                })
+            });
         });
 
     });
