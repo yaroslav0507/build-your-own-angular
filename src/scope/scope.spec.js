@@ -228,24 +228,72 @@ describe('Scope', () => {
                 scope.counter.should.equals(1);
             });
 
-            describe('eval', () => {
-                let value = Math.random();
+        });
 
-                it('should execute $evale\'d function and returns result', () => {
-                    scope.aValue = value;
-                    let result = scope.$eval(scope => scope.aValue);
-                    result.should.equals(value);
+        describe('eval', () => {
+            let value = Math.random();
+
+            it('should execute $evale\'d function and returns result', () => {
+                scope.aValue = value;
+                let result = scope.$eval(scope => scope.aValue);
+                result.should.equals(value);
+            });
+
+            it('should pass second $eval argument straight through', () => {
+                scope.aValue = value;
+
+                let result = scope.$eval((scope, arg) => {
+                    return scope.aValue + arg;
+                }, 2);
+                result.should.equals(value + 2);
+            })
+        });
+
+        describe('$apply', () => {
+            let randomValue = RandomString();
+
+            it('should execute $apply\'ed function and start the digest', () => {
+                scope.aValue = randomValue;
+                scope.counter = 0;
+
+                scope.$watch(
+                    scope => scope.aValue,
+                    (newValue, oldValue, scope) => {
+                        scope.counter++;
+                    }
+                );
+
+                scope.$digest();
+                scope.counter.should.equals(1);
+
+                scope.$apply(scope => {
+                    scope.aValue = RandomString;
                 });
 
-                it('should pass second $eval argument straight through', () => {
-                    scope.aValue = value;
-
-                    let result = scope.$eval((scope, arg) => {
-                        return scope.aValue + arg;
-                    }, 2);
-                    result.should.equals(value + 2);
-                })
+                scope.counter.should.equals(2);
             });
+        });
+
+        describe('$evalAsync', () => {
+           it('should execute $evalAsync\'ed function later in the same digest', () => {
+               scope.aValue = [1,2,3];
+               scope.asyncEvaluated = false;
+               scope.asyncEvaluatedImmediately = false;
+
+               scope.$watch(
+                   scope => scope.aValue,
+                   (newValue, oldValue, scope) => {
+                       scope.$evalAsync((scope) => {
+                           scope.asyncEvaluated = true;
+                       });
+                       scope.asyncEvaluatedImmediately = scope.asyncEvaluated;
+                   }
+               );
+
+               scope.$digest();
+               scope.asyncEvaluated.should.be.true;
+               scope.asyncEvaluatedImmediately.should.be.false;
+           });
         });
 
     });

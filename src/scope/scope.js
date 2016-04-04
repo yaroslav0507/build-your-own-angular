@@ -5,12 +5,28 @@ export default class Scope {
     constructor() {
         this.$$watchers = [];
         this.$$lastDirtyWatch = null;
+        this.$$asyncQueue = [];
     }
 
     _initWatchVal(){}
 
     $eval(expr, locals){
         return expr(this, locals)
+    }
+
+    $evalAsync(expr){
+        this.$$asyncQueue.push({
+            scope: this,
+            expression: expr
+        });
+    }
+
+    $apply(expr){
+        try {
+            return this.$eval(expr);
+        } finally {
+            this.$digest();
+        }
     }
 
     $watch(watchFn, listenerFn, valueEqFlag) {
@@ -59,6 +75,11 @@ export default class Scope {
         this.$$lastDirtyWatch = null;
 
         do {
+            while(this.$$asyncQueue.length){
+                let asyncTask = this.$$asyncQueue.shift();
+                asyncTask.scope.$eval(asyncTask.expression);
+            }
+
             dirty = this.$$digestOnce();
             if(dirty && !(TTL--)){
                 throw new Error('10 digest iterations reached');
