@@ -275,25 +275,81 @@ describe('Scope', () => {
         });
 
         describe('$evalAsync', () => {
-           it('should execute $evalAsync\'ed function later in the same digest', () => {
-               scope.aValue = [1,2,3];
-               scope.asyncEvaluated = false;
-               scope.asyncEvaluatedImmediately = false;
+            it('should execute $evalAsync\'ed function later in the same digest', () => {
+                scope.aValue = [1, 2, 3];
+                scope.asyncEvaluated = false;
+                scope.asyncEvaluatedImmediately = false;
 
-               scope.$watch(
-                   scope => scope.aValue,
-                   (newValue, oldValue, scope) => {
-                       scope.$evalAsync((scope) => {
-                           scope.asyncEvaluated = true;
-                       });
-                       scope.asyncEvaluatedImmediately = scope.asyncEvaluated;
-                   }
-               );
+                scope.$watch(
+                    scope => scope.aValue,
+                    (newValue, oldValue, scope) => {
+                        scope.$evalAsync((scope) => {
+                            scope.asyncEvaluated = true;
+                        });
+                        scope.asyncEvaluatedImmediately = scope.asyncEvaluated;
+                    }
+                );
 
-               scope.$digest();
-               scope.asyncEvaluated.should.be.true;
-               scope.asyncEvaluatedImmediately.should.be.false;
-           });
+                scope.$digest();
+                scope.asyncEvaluated.should.be.true;
+                scope.asyncEvaluatedImmediately.should.be.false;
+            });
+
+            it('should execute $evalAsync\'ed functions added by watch functions', () => {
+                scope.aValue = [1, 2, 3];
+                scope.asyncEvaluated = false;
+
+                scope.$watch(
+                    scope => {
+                        if (!scope.asyncEvaluated) {
+                            scope.$evalAsync(scope => {
+                                scope.asyncEvaluated = true;
+                            })
+                        }
+                        return scope.aValue;
+                    },
+                    (newValue, oldValue, scope) => {
+                    }
+                );
+
+                scope.$digest();
+                scope.asyncEvaluated.should.be.true;
+            });
+
+            it('should execute $evalAsync\'ed function even when not dirty', () => {
+                scope.aValue = [1, 2, 3];
+                scope.asyncEvaluatedTimes = 0;
+
+                scope.$watch(
+                    scope => {
+                        if (scope.asyncEvaluatedTimes < 2) {
+                            scope.$evalAsync(scope => {
+                                scope.asyncEvaluatedTimes++;
+                            });
+                        }
+                        return scope.aValue;
+                    },
+                    (newValue, oldValue, scope) => {
+                    }
+                );
+
+                scope.$digest();
+                scope.asyncEvaluatedTimes.should.equals(2);
+            });
+
+            it('should eventually halts $evalAsyncs added by watchers', () => {
+                scope.aValue = [1, 2, 3];
+                scope.$watch(
+                    scope => {
+                        scope.$evalAsync(scope => {
+                        });
+                        return scope.aValue;
+                    },
+                    (newValue, oldValue, scope) => {}
+                );
+
+                scope.$digest.should.throw(Error);
+            });
         });
 
     });

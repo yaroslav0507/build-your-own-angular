@@ -81,9 +81,9 @@ export default class Scope {
             }
 
             dirty = this.$$digestOnce();
-            if(dirty && !(TTL--)){
+            if((dirty || this.$$asyncQueue.length) && !(TTL--)){
                 throw new Error('10 digest iterations reached');
             }
-        } while (dirty);
+        } while (dirty || this.$$asyncQueue.length);
     }
 }
