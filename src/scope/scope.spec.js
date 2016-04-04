@@ -345,10 +345,58 @@ describe('Scope', () => {
                         });
                         return scope.aValue;
                     },
-                    (newValue, oldValue, scope) => {}
+                    (newValue, oldValue, scope) => {
+                    }
                 );
 
                 scope.$digest.should.throw(Error);
+            });
+        });
+
+        describe('pahses', () => {
+            it('should has a $$phase field whose value is the current digest phase', () => {
+                scope.aValue = [1, 2, 3];
+                scope.phaseInWatchFunction = undefined;
+                scope.phaseInListenerFuntion = undefined;
+                scope.phaseInApplyFunction = undefined;
+
+                scope.$watch(
+                    scope => {
+                        scope.phaseInWatchFunction = scope.$$phase;
+                        return scope.aValue;
+                    },
+                    (newValue, oldValue, scope) => {
+                        scope.phaseInListenerFuntion = scope.$$phase;
+                    }
+                );
+
+                scope.$apply(scope => {
+                    scope.phaseInApplyFunction = scope.$$phase;
+                });
+
+                scope.phaseInWatchFunction.should.equals('$digest');
+                scope.phaseInListenerFuntion.should.equals('$digest');
+                scope.phaseInApplyFunction.should.equals('$apply');
+            });
+
+            it('should schedule a digest in $evalAsync', done => {
+                scope.aValue = RandomString();
+                scope.counter = 0;
+
+                scope.$watch(
+                    scope => scope.aValue,
+                    (newValue, oldValue, scope) => {
+                        scope.counter++;
+                    }
+                );
+
+                scope.$evalAsync(scope => {});
+
+                scope.counter.should.equals(0);
+                setTimeout(() => {
+                    scope.counter.should.equals(1);
+                    done();
+                }, 50);
             });
         });
 
